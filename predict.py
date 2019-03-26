@@ -16,9 +16,8 @@ WIDTH = 480
 saved_ckpt_path = './checkpoint/'
 saved_prediction = './pred/'
 
-classes = ['Sky', 'Building', 'Pole', 'Road', 'Pavement', 'Tree', 'SignSymbol', 'Fence', 'Car', 'Pedestrian', 'Bicyclist']
-cmap = np.array([[0, 0, 0],
-                [128, 128, 128],
+classes = ['Sky', 'Building', 'Pole', 'Road', 'Pavement', 'Tree', 'SignSymbol', 'Fence', 'Car', 'Pedestrian', 'Bicyclist','Background']
+cmap = np.array([[128, 128, 128],
                 [128, 0, 0],
                 [192, 192, 192],
                 [128, 64, 128],
@@ -28,7 +27,8 @@ cmap = np.array([[0, 0, 0],
                 [64, 64, 128],
                 [64, 0, 128],
                 [64, 64, 0],
-                [0, 128, 192]
+                [0, 128, 192],
+                [0, 0, 0]
                 ])
 
 def color_gray(image):
