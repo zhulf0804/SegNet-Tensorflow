@@ -28,7 +28,7 @@ with tf.name_scope("loss"):
     loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits, name='loss'))
     tf.summary.scalar('loss', loss)
 
-optimizer = tf.train.GradientDescentOptimizer(0.0001).minimize(loss)
+optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
 
 with tf.name_scope("mIoU"):
     softmax = tf.nn.softmax(logits, axis=-1)
@@ -69,7 +69,9 @@ with tf.Session() as sess:
     for i in range(0, MAX_STEPS + 1):
 
         b_image, b_anno, b_filename = sess.run([image_batch, anno_batch, filename])
+        b_image = b_image - 0.5
         b_image_test, b_anno_test, b_filename_test = sess.run([image_batch_test, anno_batch_test, filename_test])
+        b_image_test = b_image_test - 0.5
         summary, _ = sess.run([merged, optimizer], feed_dict={x: b_image, y: b_anno})
         summary_writer.add_summary(summary, i)
 

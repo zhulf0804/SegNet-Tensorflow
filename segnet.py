@@ -4,11 +4,16 @@ from __future__ import division
 
 import tensorflow as tf
 import numpy as np
+import math
 
 CLASSES = 12
 kernel_size = 7
 
-def weight_variable(shape, stddev=0.1, name='weight'):
+def weight_variable(shape, stddev=None, name='weight'):
+    if stddev == None:
+        stddev = math.sqrt(2. / (shape[0] * shape[1] * shape[2]))
+    else:
+        stddev = 0.1
     initial = tf.truncated_normal(shape, stddev=stddev)
     return tf.Variable(initial, name=name)
 def bias_variable(shape, name='bias'):
