@@ -22,7 +22,7 @@ with tf.name_scope("input"):
     x = tf.placeholder(tf.float32, [BATCH_SIZE, HEIGHT, WIDTH, 3], name='x_input')
     y = tf.placeholder(tf.int32, [BATCH_SIZE, HEIGHT, WIDTH], name='ground_truth')
 
-logits = Seg.segnet(x)
+logits = Seg.segnet_2(x)
 
 with tf.name_scope("loss"):
     loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits, name='loss'))

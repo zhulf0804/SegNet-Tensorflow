@@ -42,13 +42,14 @@ def color_gray(image):
     return return_img
 
 
-image_batch, anno_batch, filename = input_data.read_batch(BATCH_SIZE, type='val')
+image_batch, anno_batch, filename = input_data.read_batch(BATCH_SIZE, type='test')
+
 
 with tf.name_scope("input"):
 
     x = tf.placeholder(tf.float32, [BATCH_SIZE, HEIGHT, WIDTH, 3], name='x_input')
 
-logits = Seg.segnet(x)
+logits = Seg.segnet_2(x, train=False)
 
 with tf.name_scope('prediction'):
     prediction = tf.argmax(tf.nn.softmax(logits, axis=-1), axis=-1, name='prediction')
@@ -66,7 +67,8 @@ with tf.Session() as sess:
 
     for i in range(1):
         b_image, b_anno, b_filename = sess.run([image_batch, anno_batch, filename])
-        pred = sess.run(prediction, feed_dict={x: b_image})
+        b_image_0 = b_image - 0.5
+        pred = sess.run(prediction, feed_dict={x: b_image_0})
 
 
         # save raw image, annotation, and prediction

@@ -7,6 +7,8 @@ import numpy as np
 import math
 
 CLASSES = 12
+BATCH_SIZE = 4
+batch_size = BATCH_SIZE
 kernel_size = 7
 
 def weight_variable(shape, stddev=None, name='weight'):
@@ -94,6 +96,25 @@ def unpool_with_argmax(bottom, argmax, output_shape=None, name='max_unpool_with_
 
         ret = tf.reshape(ret, output_shape)
         return ret
+
+def un_conv(input, num_input_channels, conv_filter_size, num_filters, height, width, train=True, padding='SAME',relu=True):
+
+
+    weights = weight_variable(shape=[conv_filter_size, conv_filter_size, num_filters, num_input_channels])
+    biases = bias_variable([num_filters])
+    if train:
+        batch_size_0 = batch_size
+    else:
+        batch_size_0 = 1
+    layer = tf.nn.conv2d_transpose(value=input, filter=weights,
+                                   output_shape=[batch_size_0, height, width, num_filters],
+                                   strides=[1, 2, 2, 1],
+                                   padding=padding)
+    layer += biases
+
+    if relu:
+        layer = tf.nn.relu(layer)
+    return layer
 
 base_feature_num = 64
 
@@ -257,12 +278,159 @@ def segnet(input):
 
     return input
 
+def segnet_2(input, train=True):
+    with tf.name_scope("encode"):
 
+        with tf.name_scope("layer_1"):
+            cur_feature_num = base_feature_num
+            w = weight_variable(shape=[kernel_size, kernel_size, 3, cur_feature_num])
+            b = bias_variable(shape=[cur_feature_num])
+            conv = conv_bn_relu(input, w, b, 1) # i is used for variable_scope
+
+        input = conv
+        with tf.name_scope("layer_2"):
+            cur_feature_num = base_feature_num
+            w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
+            b = bias_variable(shape=[cur_feature_num])
+            conv = conv_bn_relu(input, w, b, 2) # i is used for variable_scope
+            pool, pool1_indices = tf.nn.max_pool_with_argmax(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
+
+        input = pool
+
+        for i in range(3, 5):
+            with tf.name_scope("layer_%d" %i):
+                cur_feature_num = base_feature_num * 2
+                if i == 3:
+                    w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num // 2, cur_feature_num])
+                else:
+                    w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
+                b = bias_variable(shape=[cur_feature_num])
+                conv = conv_bn_relu(input, w, b, i)  # i is used for variable_scope
+                if i == 4:
+                    pool, pool2_indices = tf.nn.max_pool_with_argmax(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
+                    input = pool
+                else:
+                    input = conv
+
+        for i in range(5, 8):
+            with tf.name_scope("layer_%d" %i):
+                cur_feature_num = base_feature_num * 4
+                if i == 5:
+                    w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num // 2, cur_feature_num])
+                else:
+                    w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
+                b = bias_variable(shape=[cur_feature_num])
+                conv = conv_bn_relu(input, w, b, i)  # i is used for variable_scope
+                if i == 7:
+                    pool, pool3_indices = tf.nn.max_pool_with_argmax(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
+                    input = pool
+                else:
+                    input = conv
+
+        for i in range(8, 11):
+            with tf.name_scope("layer_%d" %i):
+                cur_feature_num = base_feature_num * 8
+                if i == 8:
+                    w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num // 2, cur_feature_num])
+                else:
+                    w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
+                b = bias_variable(shape=[cur_feature_num])
+                conv = conv_bn_relu(input, w, b, i)  # i is used for variable_scope
+                if i == 10:
+                    pool, pool4_indices = tf.nn.max_pool_with_argmax(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
+                    input = pool
+                else:
+                    input = conv
+
+        for i in range(11, 14):
+            with tf.name_scope("layer_%d" %i):
+                cur_feature_num = base_feature_num * 8
+                w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
+                b = bias_variable(shape=[cur_feature_num])
+                conv = conv_bn_relu(input, w, b, i)  # i is used for variable_scope
+                input = conv
+
+
+    with tf.name_scope("decode"):
+        for i in range(1, 4):
+            with tf.name_scope("layer_%d" % i):
+                cur_feature_num = base_feature_num * 8
+
+                w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
+                b = bias_variable(shape=[cur_feature_num])
+                conv = conv_bn_relu(input, w, b, i + 13, relu=False)  # i is used for variable_scope
+                if i == 3:
+                    shape = conv.get_shape().as_list()
+                    up_sample = un_conv(conv, cur_feature_num ,kernel_size, cur_feature_num, 2*shape[1] - 1, 2 * shape[2], train)
+                    input = up_sample
+                else:
+                    input = conv
+
+                # print(input)
+        for i in range(4, 7):
+            with tf.name_scope("layer_%d" % i):
+                cur_feature_num = base_feature_num * 8
+                if i == 6:
+                    shape = conv.get_shape().as_list()
+                    up_sample = un_conv(conv, cur_feature_num, kernel_size, cur_feature_num // 2, 2 * shape[1], 2 * shape[2], train)
+                    input = up_sample
+                else:
+                    w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
+                    b = bias_variable(shape=[cur_feature_num])
+                    conv = conv_bn_relu(input, w, b, i + 13, relu=False)  # i is used for variable_scope
+                    input =conv
+
+        for i in range(7, 10):
+            with tf.name_scope("layer_%d" % i):
+                cur_feature_num = base_feature_num * 4
+                if i == 9:
+                    shape = conv.get_shape().as_list()
+                    up_sample = un_conv(conv, cur_feature_num, kernel_size, cur_feature_num // 2, 2 * shape[1],
+                                        2 * shape[2], train)
+                    input = up_sample
+                else:
+                    w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
+                    b = bias_variable(shape=[cur_feature_num])
+                    conv = conv_bn_relu(input, w, b, i + 13, relu=False)  # i is used for variable_scope
+                    input = conv
+
+        for i in range(10, 12):
+            with tf.name_scope("layer_%d" % i):
+                cur_feature_num = base_feature_num * 2
+                if i == 11:
+                    shape = conv.get_shape().as_list()
+                    up_sample = un_conv(conv, cur_feature_num, kernel_size, cur_feature_num // 2, 2 * shape[1],
+                                        2 * shape[2], train)
+                    input = up_sample
+                else:
+                    w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
+                    b = bias_variable(shape=[cur_feature_num])
+                    conv = conv_bn_relu(input, w, b, i + 13, relu=False)  # i is used for variable_scope
+                    input = conv
+
+        for i in range(12, 14):
+            with tf.name_scope("layer_%d" % i):
+                cur_feature_num = base_feature_num
+
+                w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
+                b = bias_variable(shape=[cur_feature_num])
+                conv = conv_bn_relu(input, w, b, i + 13, relu=False)  # i is used for variable_scope
+
+                input = conv
+
+    with tf.name_scope('output'):
+
+        w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, CLASSES])
+        b = bias_variable(shape=[CLASSES])
+        conv = conv_bn_relu(input, w, b, i=222, bn=False, relu=False)
+        input = conv
+
+    return input
 
 if __name__ == '__main__':
-    input = tf.constant(1.0, shape=[8, 360, 480, 3])
+    input = tf.constant(1.0, shape=[BATCH_SIZE, 360, 480, 3])
     with tf.Session() as sess:
-        y = segnet(input)
+        y = segnet_2(input)
 
         sess.run(tf.local_variables_initializer())
         sess.run(tf.global_variables_initializer())
