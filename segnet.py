@@ -10,6 +10,7 @@ CLASSES = 12
 BATCH_SIZE = 4
 batch_size = BATCH_SIZE
 kernel_size = 7
+scale = 1e-5
 
 def weight_variable(shape, stddev=None, name='weight'):
     if stddev == None:
@@ -17,7 +18,10 @@ def weight_variable(shape, stddev=None, name='weight'):
     else:
         stddev = 0.1
     initial = tf.truncated_normal(shape, stddev=stddev)
-    return tf.Variable(initial, name=name)
+    W = tf.Variable(initial, name=name)
+    tf.add_to_collection(tf.GraphKeys.WEIGHTS, W)
+    return W
+
 def bias_variable(shape, name='bias'):
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
@@ -429,14 +433,14 @@ if __name__ == '__main__':
     input = tf.constant(1.0, shape=[BATCH_SIZE, 360, 480, 3])
     with tf.Session() as sess:
         y = segnet_2(input)
-
         sess.run(tf.local_variables_initializer())
         sess.run(tf.global_variables_initializer())
+        print(tf.get_collection(tf.GraphKeys.WEIGHTS))
 
         for i in range(2):
 
             print(y)
             y_val = sess.run(y)
-            print(y_val)
+            #print(y_val)
 
 
