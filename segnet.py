@@ -97,7 +97,7 @@ def unpool_with_argmax(bottom, argmax, output_shape=None, name='max_unpool_with_
         ret = tf.reshape(ret, output_shape)
         return ret
 
-def un_conv(input, num_input_channels, conv_filter_size, num_filters, height, width, train=True, padding='SAME',relu=True):
+def un_conv(input, num_input_channels, conv_filter_size, num_filters, height, width, train, padding='SAME',relu=True):
 
 
     weights = weight_variable(shape=[conv_filter_size, conv_filter_size, num_filters, num_input_channels])
@@ -293,7 +293,7 @@ def segnet_2(input, train=True):
             w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
             b = bias_variable(shape=[cur_feature_num])
             conv = conv_bn_relu(input, w, b, 2) # i is used for variable_scope
-            pool, pool1_indices = tf.nn.max_pool_with_argmax(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
+            pool = tf.nn.max_pool(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
 
         input = pool
 
@@ -307,7 +307,7 @@ def segnet_2(input, train=True):
                 b = bias_variable(shape=[cur_feature_num])
                 conv = conv_bn_relu(input, w, b, i)  # i is used for variable_scope
                 if i == 4:
-                    pool, pool2_indices = tf.nn.max_pool_with_argmax(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
+                    pool = tf.nn.max_pool(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
                     input = pool
                 else:
                     input = conv
@@ -322,7 +322,7 @@ def segnet_2(input, train=True):
                 b = bias_variable(shape=[cur_feature_num])
                 conv = conv_bn_relu(input, w, b, i)  # i is used for variable_scope
                 if i == 7:
-                    pool, pool3_indices = tf.nn.max_pool_with_argmax(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
+                    pool = tf.nn.max_pool(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
                     input = pool
                 else:
                     input = conv
@@ -337,7 +337,7 @@ def segnet_2(input, train=True):
                 b = bias_variable(shape=[cur_feature_num])
                 conv = conv_bn_relu(input, w, b, i)  # i is used for variable_scope
                 if i == 10:
-                    pool, pool4_indices = tf.nn.max_pool_with_argmax(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
+                    pool = tf.nn.max_pool(conv, [1, 2, 2, 1], padding='SAME', strides=[1, 2, 2, 1], name='pool')
                     input = pool
                 else:
                     input = conv
@@ -355,7 +355,6 @@ def segnet_2(input, train=True):
         for i in range(1, 4):
             with tf.name_scope("layer_%d" % i):
                 cur_feature_num = base_feature_num * 8
-
                 w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
                 b = bias_variable(shape=[cur_feature_num])
                 conv = conv_bn_relu(input, w, b, i + 13, relu=False)  # i is used for variable_scope
@@ -385,8 +384,7 @@ def segnet_2(input, train=True):
                 cur_feature_num = base_feature_num * 4
                 if i == 9:
                     shape = conv.get_shape().as_list()
-                    up_sample = un_conv(conv, cur_feature_num, kernel_size, cur_feature_num // 2, 2 * shape[1],
-                                        2 * shape[2], train)
+                    up_sample = un_conv(conv, cur_feature_num, kernel_size, cur_feature_num // 2, 2 * shape[1], 2 * shape[2], train)
                     input = up_sample
                 else:
                     w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
@@ -399,8 +397,7 @@ def segnet_2(input, train=True):
                 cur_feature_num = base_feature_num * 2
                 if i == 11:
                     shape = conv.get_shape().as_list()
-                    up_sample = un_conv(conv, cur_feature_num, kernel_size, cur_feature_num // 2, 2 * shape[1],
-                                        2 * shape[2], train)
+                    up_sample = un_conv(conv, cur_feature_num, kernel_size, cur_feature_num // 2, 2 * shape[1], 2 * shape[2], train)
                     input = up_sample
                 else:
                     w = weight_variable(shape=[kernel_size, kernel_size, cur_feature_num, cur_feature_num])
@@ -426,6 +423,7 @@ def segnet_2(input, train=True):
         input = conv
 
     return input
+
 
 if __name__ == '__main__':
     input = tf.constant(1.0, shape=[BATCH_SIZE, 360, 480, 3])

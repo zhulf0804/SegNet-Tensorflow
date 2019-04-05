@@ -15,6 +15,7 @@ HEIGHT = 360
 WIDTH = 480
 saved_ckpt_path = './checkpoint/'
 saved_prediction = './pred/'
+prediction_on = 'test' # 'train' or 'val'
 
 classes = ['Sky', 'Building', 'Pole', 'Road', 'Pavement', 'Tree', 'SignSymbol', 'Fence', 'Car', 'Pedestrian', 'Bicyclist','Background']
 cmap = np.array([[128, 128, 128],
@@ -42,7 +43,7 @@ def color_gray(image):
     return return_img
 
 
-image_batch, anno_batch, filename = input_data.read_batch(BATCH_SIZE, type='test')
+image_batch, anno_batch, filename = input_data.read_batch(BATCH_SIZE, type=prediction_on)
 
 
 with tf.name_scope("input"):
@@ -57,11 +58,14 @@ with tf.name_scope('prediction'):
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     saver = tf.train.Saver()
-    #saver.restore(sess, './checkpoint/segnet.model-3000')
+
+    #saver.restore(sess, './checkpoint/segnet.model-20000')
+
     ckpt = tf.train.get_checkpoint_state(saved_ckpt_path)
     if ckpt and ckpt.model_checkpoint_path:
         saver.restore(sess, ckpt.model_checkpoint_path)
         print("Model restored...")
+
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
@@ -96,23 +100,6 @@ with tf.Session() as sess:
         print("%s.png: prediction saved in %s" % (basename, saved_prediction))
 
 
-        '''
-        for j in range(BATCH_SIZE):
-            img = Image.fromarray(b_image[j])
-            img_2 = (pred[j] * 10)
-            img_2 = img_2.astype(np.uint8)
-            anno = Image.fromarray(img_2)
-            #anno_rgb = anno.convert("rgb")
-            anno.save(str(j) + "_anno.png")
-            img.save(str(j) + '_raw.png')
-            plt.imshow(img)
-            plt.axis('off')
-            plt.show()
-            plt.imshow(anno)
-            plt.axis('off')
-            plt.show()
-        '''
-
     coord.request_stop()
-    # 其他所有线程关闭后，这一函数才能返回
+
     coord.join(threads)
