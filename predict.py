@@ -15,7 +15,7 @@ HEIGHT = 360
 WIDTH = 480
 saved_ckpt_path = './checkpoint/'
 saved_prediction = './pred/'
-prediction_on = 'test' # 'train' or 'val'
+prediction_on = 'train' # 'train' or 'val'
 
 classes = ['Sky', 'Building', 'Pole', 'Road', 'Pavement', 'Tree', 'SignSymbol', 'Fence', 'Car', 'Pedestrian', 'Bicyclist','Background']
 cmap = np.array([[128, 128, 128],
@@ -65,7 +65,7 @@ with tf.Session() as sess:
     if ckpt and ckpt.model_checkpoint_path:
         saver.restore(sess, ckpt.model_checkpoint_path)
         print("Model restored...")
-
+    print("predicting on %s set..." % prediction_on)
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 

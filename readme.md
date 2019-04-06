@@ -31,7 +31,7 @@ The CamVid dataset can be as follows:
 
 > python predict.py 
 
-## Results
+## Results(trained on train set)
 
 #### Before optimization
 
@@ -48,4 +48,20 @@ The CamVid dataset can be as follows:
     ![](./testresults/train_loss_iou_before_opt.png)
 
 
-#### After optimization
+#### After optimization(l2 regularization)
+
++ prediction on train set
+    
+    ![](./testresults/train_1_after_reg.png)
+    
++ prediction on test set
+
+    ![](./testresults/test_1_after_reg.png)
+
++ train loss and mIoU
+
+    ![](./testresults/train_loss_iou_after_reg.png)
+    
++ test loss and mIoU
+
+    ![](./testresults/test_loss_iou_after_reg.png)
