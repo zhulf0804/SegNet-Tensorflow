@@ -86,8 +86,8 @@ with tf.Session() as sess:
         test_summary, _ = sess.run([merged, optimizer], feed_dict={x: b_image_test, y: b_anno_test})
         test_summary_writer.add_summary(test_summary, i)
 
-        train_mIoU_val, train_loss_val = sess.run([mIoU, loss], feed_dict={x: b_image, y: b_anno })
-        test_mIoU_val, test_loss_val = sess.run([mIoU, loss], feed_dict={x: b_image_test, y: b_anno_test})
+        train_mIoU_val, train_loss_val = sess.run([mIoU, loss_all], feed_dict={x: b_image, y: b_anno })
+        test_mIoU_val, test_loss_val = sess.run([mIoU, loss_all], feed_dict={x: b_image_test, y: b_anno_test})
 
         if i % 10 == 0:
             print("training step: %d, training loss: %f, training mIoU: %f, test loss: %f, test mIoU: %f" %(i, train_loss_val, train_mIoU_val[0], test_loss_val, test_mIoU_val[0]))
