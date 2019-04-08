@@ -83,7 +83,7 @@ with tf.Session() as sess:
 
         train_summary, _ = sess.run([merged, optimizer], feed_dict={x: b_image, y: b_anno})
         train_summary_writer.add_summary(train_summary, i)
-        test_summary, _ = sess.run([merged, optimizer], feed_dict={x: b_image_test, y: b_anno_test})
+        test_summary = sess.run(merged, feed_dict={x: b_image_test, y: b_anno_test})
         test_summary_writer.add_summary(test_summary, i)
 
         train_mIoU_val, train_loss_val = sess.run([mIoU, loss_all], feed_dict={x: b_image, y: b_anno })

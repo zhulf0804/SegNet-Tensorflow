@@ -48,20 +48,22 @@ The CamVid dataset can be as follows:
     ![](./testresults/train_loss_iou_before_opt.png)
 
 
-#### After optimization(l2 regularization)
+<!-- ## After optimization(l2 regularization)
 
-+ prediction on train set
++ prediction on train set(batch size = 4, step = 20,000)
     
     ![](./testresults/train_1_after_reg.png)
     
-+ prediction on test set
++ prediction on test set(batch size = 4, step = 20,000)
 
     ![](./testresults/test_1_after_reg.png)
 
-+ train loss and mIoU
++ train loss and mIoU(batch size = 4, step = 20,000)
 
     ![](./testresults/train_loss_iou_after_reg.png)
     
-+ test loss and mIoU
++ test loss and mIoU(batch size = 4, step = 20,000)
 
     ![](./testresults/test_loss_iou_after_reg.png)
+    
+-->
