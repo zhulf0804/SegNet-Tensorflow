@@ -33,6 +33,7 @@ with tf.name_scope('regularization'):
 with tf.name_scope("loss"):
     loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits, name='loss'))
     loss_all = loss + reg_term
+    tf.summary.scalar('loss', loss)
     tf.summary.scalar('loss_all', loss_all)
 
 optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
@@ -86,11 +87,11 @@ with tf.Session() as sess:
         test_summary = sess.run(merged, feed_dict={x: b_image_test, y: b_anno_test})
         test_summary_writer.add_summary(test_summary, i)
 
-        train_mIoU_val, train_loss_val = sess.run([mIoU, loss_all], feed_dict={x: b_image, y: b_anno })
-        test_mIoU_val, test_loss_val = sess.run([mIoU, loss_all], feed_dict={x: b_image_test, y: b_anno_test})
+        train_mIoU_val, train_loss_val_all, train_loss_val = sess.run([mIoU, loss_all, loss], feed_dict={x: b_image, y: b_anno })
+        test_mIoU_val, test_loss_val_all, test_loss_val = sess.run([mIoU, loss_all, loss], feed_dict={x: b_image_test, y: b_anno_test})
 
         if i % 10 == 0:
-            print("training step: %d, training loss: %f, training mIoU: %f, test loss: %f, test mIoU: %f" %(i, train_loss_val, train_mIoU_val[0], test_loss_val, test_mIoU_val[0]))
+            print("training step: %d, training loss all: %f, training loss: %f, training mIoU: %f, test loss all: %f, test loss: %f, test mIoU: %f" %(i, train_loss_val_all, train_loss_val, train_mIoU_val[0], test_loss_val_all, test_loss_val, test_mIoU_val[0]))
 
         if i % 2000 == 0:
             saver.save(sess, os.path.join(saved_ckpt_path, 'segnet.model'), global_step=i)
