@@ -36,7 +36,7 @@ with tf.name_scope("loss"):
     tf.summary.scalar('loss', loss)
     tf.summary.scalar('loss_all', loss_all)
 
-optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss)
+optimizer = tf.train.AdamOptimizer(0.0001).minimize(loss_all)
 
 with tf.name_scope("mIoU"):
     softmax = tf.nn.softmax(logits, axis=-1)
