@@ -13,9 +13,10 @@ import input_data
 BATCH_SIZE = 1
 HEIGHT = 360
 WIDTH = 480
+CLASSES = Seg.CLASSES
 saved_ckpt_path = './checkpoint/'
 saved_prediction = './pred/'
-prediction_on = 'train' # 'train' or 'val'
+prediction_on = 'test' # 'train', 'val' or 'test'
 
 classes = ['Sky', 'Building', 'Pole', 'Road', 'Pavement', 'Tree', 'SignSymbol', 'Fence', 'Car', 'Pedestrian', 'Bicyclist','Background']
 cmap = np.array([[128, 128, 128],
@@ -49,31 +50,36 @@ image_batch, anno_batch, filename = input_data.read_batch(BATCH_SIZE, type=predi
 with tf.name_scope("input"):
 
     x = tf.placeholder(tf.float32, [BATCH_SIZE, HEIGHT, WIDTH, 3], name='x_input')
+    y = tf.placeholder(tf.int32, [BATCH_SIZE, HEIGHT, WIDTH], name='ground_truth')
 
 logits = Seg.segnet_2(x, train=False)
 
-with tf.name_scope('prediction'):
-    prediction = tf.argmax(tf.nn.softmax(logits, axis=-1), axis=-1, name='prediction')
+
+with tf.name_scope('prediction_and_miou'):
+
+    prediction = tf.argmax(logits, axis=-1, name='predictions')
+    mIoU = tf.metrics.mean_iou(y, prediction, CLASSES, name='mIoU')
+
 
 with tf.Session() as sess:
+    sess.run(tf.local_variables_initializer())
     sess.run(tf.global_variables_initializer())
     saver = tf.train.Saver()
 
-    #saver.restore(sess, './checkpoint/segnet.model-20000')
+    saver.restore(sess, './checkpoint/segnet.model-12000')
 
-    ckpt = tf.train.get_checkpoint_state(saved_ckpt_path)
-    if ckpt and ckpt.model_checkpoint_path:
-        saver.restore(sess, ckpt.model_checkpoint_path)
-        print("Model restored...")
+    #ckpt = tf.train.get_checkpoint_state(saved_ckpt_path)
+    #if ckpt and ckpt.model_checkpoint_path:
+    #    saver.restore(sess, ckpt.model_checkpoint_path)
+    #    print("Model restored...")
     print("predicting on %s set..." % prediction_on)
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
-    for i in range(1):
+    for i in range(2):
         b_image, b_anno, b_filename = sess.run([image_batch, anno_batch, filename])
         b_image_0 = b_image - 0.5
-        pred = sess.run(prediction, feed_dict={x: b_image_0})
-
+        pred, mIoU_val = sess.run([prediction, mIoU], feed_dict={x: b_image_0, y: b_anno})
 
         # save raw image, annotation, and prediction
         pred = pred.astype(np.uint8)
@@ -97,7 +103,7 @@ with tf.Session() as sess:
         anno.save(os.path.join(saved_prediction, basename + '_anno.png'))
         pred.save(os.path.join(saved_prediction, basename + '_pred.png'))
 
-        print("%s.png: prediction saved in %s" % (basename, saved_prediction))
+        print("%s.png: prediction saved in %s, mIoU value is %f" % (basename, saved_prediction, mIoU_val[0]))
 
 
     coord.request_stop()

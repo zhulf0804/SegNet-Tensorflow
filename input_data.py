@@ -45,7 +45,23 @@ def read_and_decode(filelist):
     return image, anno, filename
 
 def read_batch(batch_size, type = 'train'):
-    filelist = [os.path.join(tfrecord_file, 'image_%s_%05d-of-%05d.tfrecord' % (type, shard_id, _NUM_SHARDS - 1)) for shard_id in range(_NUM_SHARDS)]
+    filelist_train = [os.path.join(tfrecord_file, 'image_%s_%05d-of-%05d.tfrecord' % ('train', shard_id, _NUM_SHARDS - 1)) for shard_id in range(_NUM_SHARDS)]
+    filelist_val = [os.path.join(tfrecord_file, 'image_%s_%05d-of-%05d.tfrecord' % ('val', shard_id, _NUM_SHARDS - 1)) for shard_id in range(_NUM_SHARDS)]
+    filelist_test = [os.path.join(tfrecord_file, 'image_%s_%05d-of-%05d.tfrecord' % ('test', shard_id, _NUM_SHARDS - 1)) for shard_id in range(_NUM_SHARDS)]
+
+    filelist = []
+    if type == 'train':
+        filelist = filelist + filelist_train
+    elif type == 'val':
+        filelist = filelist + filelist_val
+    elif type == 'test':
+        filelist = filelist + filelist_test
+    elif type == 'trainval':
+        filelist = filelist + filelist_train + filelist_val
+    else:
+        raise Exception('data set name not exits')
+
+
     print(filelist)
     image, anno, filename = read_and_decode(filelist)
 
@@ -57,7 +73,7 @@ def read_batch(batch_size, type = 'train'):
 
 if __name__ == '__main__':
     BATCH_SIZE = 4
-    image_batch, anno_batch, filename = read_batch(BATCH_SIZE, type='train')
+    image_batch, anno_batch, filename = read_batch(BATCH_SIZE, type='test')
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         coord = tf.train.Coordinator()
